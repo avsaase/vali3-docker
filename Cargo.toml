@@ -1,0 +1,22 @@
+[package]
+name = "vali3-docker"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+axum = { version = "0.8.9", features = ["multipart"] }
+bytes = "1.12.2"
+flate2 = "1.1.11"
+md5 = "0.8.1"
+nix = { version = "0.32.0", features = ["signal"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tempfile = "3.27.0"
+thiserror = "2.0.21"
+tokio = { version = "1.54.1", features = ["macros", "process", "rt-multi-thread", "sync"] }
+tower = { version = "0.5.3", features = ["limit"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+typenv = "0.1.0"
+zip = { version = "9.8.1", default-features = false, features = ["deflate"] }

@@ -1,0 +1,8 @@
+target/
+.git/
+.jj/
+vali3/app/
+vali3/web/
+vali3/downloads/
+vali3/documents/
+vali3/ckeditor/
