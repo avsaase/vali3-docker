@@ -1,0 +1,3 @@
+[submodule "vali3"]
+	path = vali3
+	url = https://github.com/arieck/vali3.git
