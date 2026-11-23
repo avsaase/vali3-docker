@@ -8,7 +8,7 @@ pub struct Config {
     #[env(default = "0.0.0.0:8080")]
     pub bind: String,
 
-    #[env(default_value = 3_000_000)]
+    #[env(default_value = 3 * 1024 * 1024)]
     pub max_size: usize,
 
     #[env(default_value = 8)]

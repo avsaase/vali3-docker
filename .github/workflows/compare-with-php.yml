@@ -1,0 +1,141 @@
+name: Compare Docker server with PHP server
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      registry:
+        image: registry:3
+        ports:
+          - 5000:5000
+
+    env:
+      DOCKER_IMAGE: localhost:5000/vali3-docker:ci
+      PHP_IMAGE: localhost:5000/vali3-php:ci
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          # The builder reaches the local registry through the host network.
+          driver-opts: network=host
+
+      - name: Wait for local registry
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:5000/v2/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "local registry did not become ready" >&2
+          exit 1
+
+      - name: Build server image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.DOCKER_IMAGE }}
+          cache-from: type=gha,scope=vali3-docker
+          cache-to: type=gha,mode=max,scope=vali3-docker,ignore-error=true
+
+      - name: Build PHP image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: .github/php/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.PHP_IMAGE }}
+          build-args: |
+            BASE_IMAGE=${{ env.DOCKER_IMAGE }}
+          cache-from: type=gha,scope=vali3-php
+          cache-to: type=gha,mode=max,scope=vali3-php,ignore-error=true
+
+      - name: Prepare PHP server tree
+        run: |
+          python3 .github/scripts/prepare_php_server.py \
+            --source vali3 \
+            --destination "$RUNNER_TEMP/vali3-php"
+
+      - name: Download Wine-compatible seccomp profile
+        run: |
+          # Docker 29.4.2 blocks the 32-bit socket syscalls Wine needs. This is
+          # the profile Docker recommends for Wine/32-bit workloads; it allows
+          # socketcall while keeping AF_ALG blocked.
+          curl -fsSL \
+            https://raw.githubusercontent.com/moby/profiles/refs/tags/seccomp/v0.2.1/seccomp/default.json \
+            -o "$RUNNER_TEMP/seccomp-wine.json"
+
+      - name: Start servers
+        run: |
+          docker run -d --platform linux/amd64 --name vali3-docker -p 8080:8080 \
+            --security-opt "seccomp=$RUNNER_TEMP/seccomp-wine.json" \
+            -e BIND=0.0.0.0:8080 \
+            -e TIMEOUT=60 \
+            "$DOCKER_IMAGE"
+
+          docker run -d --platform linux/amd64 --name vali3-php -p 8081:8081 \
+            --security-opt "seccomp=$RUNNER_TEMP/seccomp-wine.json" \
+            -v "$RUNNER_TEMP/vali3-php:/app/vali3:ro" \
+            --entrypoint /usr/local/bin/php-entrypoint.sh \
+            "$PHP_IMAGE"
+
+      - name: Collect responses from the Docker server
+        run: |
+          python3 .github/scripts/collect_responses.py \
+            --base-url http://127.0.0.1:8080/api/vali/json \
+            --ready-url http://127.0.0.1:8080/ready \
+            --downloads vali3/downloads \
+            --output "$RUNNER_TEMP/docker.json"
+
+      - name: Collect responses from the PHP server
+        run: |
+          python3 .github/scripts/collect_responses.py \
+            --base-url 'http://127.0.0.1:8081/api.php?service=vali&output=json' \
+            --downloads vali3/downloads \
+            --output "$RUNNER_TEMP/php.json"
+
+      - name: Compare responses
+        run: |
+          python3 .github/scripts/compare_responses.py \
+            --docker "$RUNNER_TEMP/docker.json" \
+            --php "$RUNNER_TEMP/php.json"
+
+      - name: Store responses
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vali-responses
+          path: |
+            ${{ runner.temp }}/docker.json
+            ${{ runner.temp }}/php.json
+          if-no-files-found: ignore
+
+      - name: Show server logs
+        if: failure()
+        run: |
+          docker logs vali3-docker || true
+          docker logs vali3-php || true
+
+      - name: Stop servers
+        if: always()
+        run: docker rm -f vali3-docker vali3-php || true

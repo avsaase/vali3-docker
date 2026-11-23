@@ -55,9 +55,8 @@ ENV WINEPREFIX=/home/vali/.wine \
     WINEDEBUG=-all \
     WINEDLLOVERRIDES="mscoree,mshtml="
 
-# Create the Wine prefix at build time. Without this, the first validation would
-# initialize it at runtime and Wine may try to download Mono/Gecko.
-RUN wineboot --init \
-    && wineserver --wait
+# The Wine prefix is initialized by the entrypoint instead of at build time.
+# Docker 29.4.2's seccomp profile blocks the 32-bit socket syscalls Wine needs,
+# which made `wineboot --init` fail while building the image.
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]

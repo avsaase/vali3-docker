@@ -39,3 +39,23 @@ curl -F 'igcfile=@vali3/downloads/sample-xmx.igc' \
   -F 'out=vali' \
   http://127.0.0.1:8080/api/vali/json
 ```
+
+Check that the server is ready:
+
+```sh
+curl -f http://127.0.0.1:8080/ready
+```
+
+## Comparing with the PHP implementation
+
+The [Compare Docker server with PHP server](.github/workflows/compare-with-php.yml)
+workflow runs the Docker image and the PHP implementation from `vali3/` side by
+side, posts every `vali3/downloads/*.igc` sample to both, and compares the JSON
+responses.
+
+Both servers run in the same wine-based image so the validators behave the
+same. The PHP code targets Windows, so `.github/scripts/prepare_php_server.py`
+creates a CI-only copy that uses POSIX paths, resolves module names
+case-insensitively and hands the validator executables to wine. The workflow
+uses Docker BuildKit with the GitHub Actions cache, so Rust and PHP image layers
+are reused between runs.

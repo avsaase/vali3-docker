@@ -11,7 +11,7 @@ use axum::{
     extract::{DefaultBodyLimit, Multipart, State, multipart::MultipartRejection},
     http::{StatusCode, header},
     response::IntoResponse,
-    routing::post,
+    routing::{get, post},
 };
 use bytes::Bytes;
 use serde::Serialize;
@@ -55,6 +55,7 @@ pub async fn serve(
     };
 
     let app = Router::new()
+        .route("/ready", get(ready))
         .route("/api/vali/json", post(handle_vali))
         .route("/api/vali", post(handle_vali))
         .route("/api.php", post(handle_vali))
@@ -67,6 +68,14 @@ pub async fn serve(
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn ready() -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+        "ok\n",
+    )
 }
 
 async fn handle_vali(
