@@ -23,6 +23,12 @@ Or with Compose:
 docker compose up --build
 ```
 
+Prebuilt images are published to Docker Hub as `avsaase/vali3`, tagged with the `<vali3 commit>-<project commit>` version as well as `latest`:
+
+```sh
+docker run --rm --platform linux/amd64 -p 8080:8080 avsaase/vali3:<submodule>-<project>
+```
+
 Validate a file over HTTP:
 
 ```sh
