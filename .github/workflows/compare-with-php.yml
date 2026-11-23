@@ -1,9 +1,14 @@
 name: Compare Docker server with PHP server
 
 on:
+  # Pushes to master are compared by the publish workflow, which only pushes
+  # the image when the comparison succeeds. Other branches run it directly.
   push:
+    branches-ignore:
+      - master
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
