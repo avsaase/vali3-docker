@@ -1,10 +1,12 @@
 # vali3-docker
 
-A self-contained Docker image of the FAI/CIVL IGC validation service, with the same JSON API as the original PHP server.
+A self-contained Docker port of the FAI/CIVL IGC validation service, with the same JSON API as the original PHP server. This is a port, not the original ValiServer code.
 
 ## Why
 
-The official validation server at [vali.fai-civl.org](https://vali.fai-civl.org) is firewalled and only available to selected competitions. Anyone else who wants to validate IGC files has to run the old PHP stack on Windows to able to run the 32-bit Windows executables. This image packages those validators with Wine behind a small Rust HTTP server, so validating a flight is one `docker run` (or one HTTP request) away.
+The official validation server at [vali.fai-civl.org](https://vali.fai-civl.org) is firewalled[^1] and only available to selected competitions. Anyone else who wants to validate IGC files has to run the old PHP stack on Windows to able to run the 32-bit Windows executables. This image packages those validators with Wine behind a small Rust HTTP server, so validating a flight is one `docker run` (or one HTTP request) away.
+
+[^1]: I think because it runs an old PHP version that's vulnerable to the recent PHP2Shell.
 
 ## Quick start
 
