@@ -98,7 +98,7 @@ There is no isolation beyond the container. A validator can read and write whate
 
 ## Development
 
-`vali3/` is a git submodule with the original PHP sources and sample flights. The [compare workflow](.github/workflows/compare-with-php.yml) runs this image and the PHP server side by side against every sample in `vali3/downloads/` and diffs the JSON responses.
+`vali3/` is a git submodule with the original PHP sources and sample flights. With the submodule checked out and Wine installed, you can run the server locally with `cargo run`, or validate a single file with `cargo run -- vali3/downloads/sample-xmx.igc`.
 
 ## License
 
