@@ -56,14 +56,6 @@ jobs:
           cache-from: type=gha,scope=vali3-docker
           cache-to: type=gha,mode=max,scope=vali3-docker,ignore-error=true
 
-      - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.IMAGE_NAME }}
-          readme-filepath: ./README.md
-
       - name: Summarize published tags
         run: |
           echo "Published \`${IMAGE_NAME}:${{ steps.version.outputs.tag }}\` and \`${IMAGE_NAME}:latest\`." >> "$GITHUB_STEP_SUMMARY"
