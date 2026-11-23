@@ -91,3 +91,7 @@ There is no isolation beyond the container. A validator can read and write whate
 ## Development
 
 `vali3/` is a git submodule with the original PHP sources and sample flights. The [compare workflow](.github/workflows/compare-with-php.yml) runs this image and the PHP server side by side against every sample in `vali3/downloads/` and diffs the JSON responses.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). The `vali3/` submodule contains the original ValiServer code, which is licensed separately under [CDDL 1.0](vali3/LICENSE.md).
