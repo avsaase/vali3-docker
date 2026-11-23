@@ -56,6 +56,8 @@ jobs:
           tags: ${{ env.DOCKER_IMAGE }}
           cache-from: type=gha,scope=vali3-docker
           cache-to: type=gha,mode=max,scope=vali3-docker,ignore-error=true
+          build-args: |
+            INIT_WINE=false
 
       - name: Build PHP image
         uses: docker/build-push-action@v7

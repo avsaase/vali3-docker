@@ -13,4 +13,10 @@ services:
     environment:
       BIND: 0.0.0.0:8080
       RUST_LOG: info
+    volumes:
+      # Persist the Wine prefix across container re-creation.
+      - vali3-wine:/home/vali/.wine
     restart: unless-stopped
+
+volumes:
+  vali3-wine:

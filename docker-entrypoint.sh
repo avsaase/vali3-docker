@@ -1,9 +1,9 @@
 #!/bin/sh
 set -eu
 
-# Initialize the Wine prefix on first start. Doing this at container start
-# instead of at image build time keeps the image buildable on Docker versions
-# whose seccomp profile blocks the socket syscalls Wine needs (e.g. 29.4.2).
+# Initialize the Wine prefix on first start if the image was built with
+# INIT_WINE=false (see the Dockerfile), for example on Docker 29.4.2 whose
+# seccomp profile blocks the socket syscalls Wine needs.
 if [ ! -f "$WINEPREFIX/system.reg" ]; then
     wineboot --init
     wineserver --wait

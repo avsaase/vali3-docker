@@ -55,8 +55,14 @@ ENV WINEPREFIX=/home/vali/.wine \
     WINEDEBUG=-all \
     WINEDLLOVERRIDES="mscoree,mshtml="
 
-# The Wine prefix is initialized by the entrypoint instead of at build time.
-# Docker 29.4.2's seccomp profile blocks the 32-bit socket syscalls Wine needs,
-# which made `wineboot --init` fail while building the image.
+# Pre-initialize the Wine prefix so container startup is fast. On Docker
+# versions whose seccomp profile blocks Wine's 32-bit socket syscalls (for
+# example 29.4.2), build with --build-arg INIT_WINE=false; the entrypoint will
+# initialize the prefix at runtime instead.
+ARG INIT_WINE=true
+RUN if [ "$INIT_WINE" = "true" ]; then \
+        wineboot --init \
+        && wineserver --wait; \
+    fi
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]

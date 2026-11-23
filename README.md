@@ -32,6 +32,12 @@ Or with Docker Compose:
 docker compose up --build
 ```
 
+The image pre-initializes the Wine prefix during the build, so container
+startup is fast. If your Docker version blocks the 32-bit socket syscalls Wine
+needs (for example 29.4.2), build with `--build-arg INIT_WINE=false` and keep
+`/home/vali/.wine` in a named volume; the entrypoint will initialize it on the
+first start.
+
 Validate a file over HTTP:
 
 ```sh

@@ -12,6 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 REQUEST_ERRORS = (OSError, json.JSONDecodeError, http.client.HTTPException)
@@ -140,6 +141,15 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--timeout", default=180.0, type=float)
     parser.add_argument(
+        "--jobs",
+        default=1,
+        type=int,
+        help=(
+            "number of parallel validation requests; keep at 1 for the "
+            "single-threaded PHP built-in server"
+        ),
+    )
+    parser.add_argument(
         "--wait",
         default=120.0,
         type=float,
@@ -159,15 +169,45 @@ def main() -> int:
 
     results: dict[str, object] = {}
     failures = 0
+    completed = 0
 
-    for index, path in enumerate(files, 1):
-        try:
-            results[path.name] = post_igc_with_retry(args.base_url, path, args.timeout)
-            print(f"[{index:3}/{len(files)}] {path.name}", flush=True)
-        except REQUEST_ERRORS as error:
-            failures += 1
-            results[path.name] = {"_request_error": str(error)}
-            print(f"[{index:3}/{len(files)}] {path.name}: {error}", file=sys.stderr)
+    if args.jobs <= 1:
+        for path in files:
+            completed += 1
+            try:
+                results[path.name] = post_igc_with_retry(
+                    args.base_url, path, args.timeout
+                )
+                print(f"[{completed:3}/{len(files)}] {path.name}", flush=True)
+            except REQUEST_ERRORS as error:
+                failures += 1
+                results[path.name] = {"_request_error": str(error)}
+                print(
+                    f"[{completed:3}/{len(files)}] {path.name}: {error}",
+                    file=sys.stderr,
+                )
+    else:
+        with ThreadPoolExecutor(max_workers=args.jobs) as executor:
+            futures = {
+                executor.submit(
+                    post_igc_with_retry, args.base_url, path, args.timeout
+                ): path
+                for path in files
+            }
+
+            for future in as_completed(futures):
+                path = futures[future]
+                completed += 1
+                try:
+                    results[path.name] = future.result()
+                    print(f"[{completed:3}/{len(files)}] {path.name}", flush=True)
+                except REQUEST_ERRORS as error:
+                    failures += 1
+                    results[path.name] = {"_request_error": str(error)}
+                    print(
+                        f"[{completed:3}/{len(files)}] {path.name}: {error}",
+                        file=sys.stderr,
+                    )
 
     args.output.write_text(json.dumps(results, indent=2, sort_keys=True) + "\n")
     print(f"Wrote {len(results)} responses to {args.output}")
