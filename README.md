@@ -26,6 +26,12 @@ Start the server:
 docker run --rm --platform linux/amd64 -p 8080:8080 vali3-docker
 ```
 
+Or with Docker Compose:
+
+```sh
+docker compose up --build
+```
+
 Validate a file over HTTP:
 
 ```sh

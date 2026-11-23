@@ -1,0 +1,16 @@
+services:
+  vali3:
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+    image: vali3-docker:latest
+    # The validators are 32-bit Windows executables run through Wine, so the
+    # container has to run as amd64 even on ARM hosts.
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+    environment:
+      BIND: 0.0.0.0:8080
+      RUST_LOG: info
+    restart: unless-stopped
