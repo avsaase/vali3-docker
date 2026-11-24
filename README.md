@@ -74,17 +74,18 @@ The response mirrors the PHP server: `result`, `status`, `msg`, `igc`, `ref`, `s
 
 The server is configured with environment variables:
 
-| Variable          | Default                     | Description                                               |
-| ----------------- | --------------------------- | --------------------------------------------------------- |
-| `BIND`            | `0.0.0.0:8080`              | Address and port the HTTP server listens on.              |
-| `MAX_SIZE`        | `3145728` (3 MB)            | Maximum IGC size in bytes (also applies after unpacking). |
-| `MAX_CONCURRENCY` | `8`                         | Maximum validations running at the same time.             |
-| `TIMEOUT`         | `10`                        | Per-validation timeout in seconds.                        |
-| `VALI_CONFIG`     | `vali3/vali-igc.conf`       | Validator module configuration file.                      |
-| `VALI_MODULES`    | `vali3/cgi-bin`             | Directory containing the validator executables.           |
-| `WINE`            | `wine`                      | Wine binary used to run the validators.                   |
-| `IVSHELL`         | `vali3/cgi-bin/ivshell.exe` | The ivshell driver executable.                            |
-| `RUST_LOG`        | `info`                      | Log level and filters (`tracing` env-filter syntax).      |
+| Variable          | Default                                                      | Description                                               |
+| ----------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| `BIND`            | `0.0.0.0:8080`                                               | Address and port the HTTP server listens on.              |
+| `SERVER_NAME`     | `Open Validation Server 3.03 (unofficial vali3-docker port)` | Value returned in the `server` field of API responses.    |
+| `MAX_SIZE`        | `3145728` (3 MB)                                             | Maximum IGC size in bytes (also applies after unpacking). |
+| `MAX_CONCURRENCY` | `8`                                                          | Maximum validations running at the same time.             |
+| `TIMEOUT`         | `10`                                                         | Per-validation timeout in seconds.                        |
+| `VALI_CONFIG`     | `vali3/vali-igc.conf`                                        | Validator module configuration file.                      |
+| `VALI_MODULES`    | `vali3/cgi-bin`                                              | Directory containing the validator executables.           |
+| `WINE`            | `wine`                                                       | Wine binary used to run the validators.                   |
+| `IVSHELL`         | `vali3/cgi-bin/ivshell.exe`                                  | The ivshell driver executable.                            |
+| `RUST_LOG`        | `info`                                                       | Log level and filters (`tracing` env-filter syntax).      |
 
 The image also uses Wine's `WINEPREFIX` (`/home/vali/.wine`) and keeps a `wineserver` running for the container's lifetime. Compose persists the prefix in a named volume; keep that volume if you build with `INIT_WINE=false` on Docker versions that block Wine's 32-bit socket syscalls.
 

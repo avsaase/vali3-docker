@@ -8,6 +8,9 @@ pub struct Config {
     #[env(default = "0.0.0.0:8080")]
     pub bind: String,
 
+    #[env(default = "Open Validation Server 3.03 (unofficial vali3-docker port)")]
+    pub server_name: String,
+
     #[env(default_value = 3 * 1024 * 1024)]
     pub max_size: usize,
 

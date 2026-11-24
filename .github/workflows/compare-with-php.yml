@@ -98,6 +98,7 @@ jobs:
             --security-opt "seccomp=$RUNNER_TEMP/seccomp-wine.json" \
             -e BIND=0.0.0.0:8080 \
             -e TIMEOUT=60 \
+            -e "SERVER_NAME=Open Validation Server 3.03" \
             "$DOCKER_IMAGE"
 
           docker run -d --platform linux/amd64 --name vali3-php -p 8081:8081 \

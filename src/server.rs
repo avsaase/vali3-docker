@@ -25,8 +25,6 @@ use crate::{
     validate::{IvshellOutput, run_ivshell},
 };
 
-const SERVER_NAME: &str = "Open Validation Server 3.03";
-
 #[derive(Clone)]
 pub struct AppState {
     config: Arc<Config>,
@@ -102,7 +100,12 @@ async fn handle_vali_inner(
                 body = %error.body_text(),
                 "failed to parse multipart request"
             );
-            return ApiResponse::error_response(ValiError::Request, String::new(), String::new());
+            return ApiResponse::error_response(
+                ValiError::Request,
+                String::new(),
+                String::new(),
+                &state.config.server_name,
+            );
         }
     };
 
@@ -127,6 +130,7 @@ async fn handle_vali_inner(
                                 ValiError::Upload,
                                 igc_name,
                                 String::new(),
+                                &state.config.server_name,
                             );
                         }
                     };
@@ -141,6 +145,7 @@ async fn handle_vali_inner(
                                 ValiError::Request,
                                 String::new(),
                                 String::new(),
+                                &state.config.server_name,
                             );
                         }
                     };
@@ -155,6 +160,7 @@ async fn handle_vali_inner(
                     ValiError::Request,
                     String::new(),
                     String::new(),
+                    &state.config.server_name,
                 );
             }
         }
@@ -165,11 +171,21 @@ async fn handle_vali_inner(
     let md5 = fields.remove("md5");
 
     let Some((file_name, data)) = file else {
-        return ApiResponse::error_response(ValiError::Request, String::new(), reference);
+        return ApiResponse::error_response(
+            ValiError::Request,
+            String::new(),
+            reference,
+            &state.config.server_name,
+        );
     };
 
     if file_name.is_empty() {
-        return ApiResponse::error_response(ValiError::Request, String::new(), reference);
+        return ApiResponse::error_response(
+            ValiError::Request,
+            String::new(),
+            reference,
+            &state.config.server_name,
+        );
     }
 
     let igc_name = sanitize_igc_name(&file_name);
@@ -234,19 +250,25 @@ async fn validate(
             },
             igc_name,
             reference,
+            &config.server_name,
         );
     }
 
     if let Some(md5) = md5
         && !md5.eq_ignore_ascii_case(&md5_hex(data.clone()))
     {
-        return ApiResponse::error_response(ValiError::UploadHash, igc_name, reference);
+        return ApiResponse::error_response(
+            ValiError::UploadHash,
+            igc_name,
+            reference,
+            &config.server_name,
+        );
     }
 
     let data = match igc::unpack(data, config.max_size) {
         Ok(data) => data,
         Err(error) => {
-            return ApiResponse::error_response(error, igc_name, reference);
+            return ApiResponse::error_response(error, igc_name, reference, &config.server_name);
         }
     };
 
@@ -258,9 +280,15 @@ async fn validate(
                 _ => false,
             };
 
-            ApiResponse::from_ivshell(output, igc_name, reference, include_output)
+            ApiResponse::from_ivshell(
+                output,
+                igc_name,
+                reference,
+                include_output,
+                config.server_name.clone(),
+            )
         }
-        Err(error) => ApiResponse::error_response(error, igc_name, reference),
+        Err(error) => ApiResponse::error_response(error, igc_name, reference, &config.server_name),
     }
 }
 
@@ -318,7 +346,7 @@ struct ApiResponse {
     igc: String,
     #[serde(rename = "ref")]
     reference: String,
-    server: &'static str,
+    server: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     output: Option<Vec<String>>,
 }
@@ -343,6 +371,7 @@ impl ApiResponse {
         igc: String,
         reference: String,
         include_output: bool,
+        server: String,
     ) -> Self {
         Self {
             result: output.result,
@@ -350,19 +379,19 @@ impl ApiResponse {
             msg: output.message,
             igc,
             reference,
-            server: SERVER_NAME,
+            server,
             output: include_output.then_some(output.lines),
         }
     }
 
-    fn error_response(error: ValiError, igc: String, reference: String) -> Self {
+    fn error_response(error: ValiError, igc: String, reference: String, server: &str) -> Self {
         Self {
             result: "ERROR".to_string(),
             status: error.status().to_string(),
             msg: error.to_string(),
             igc,
             reference,
-            server: SERVER_NAME,
+            server: server.to_string(),
             output: None,
         }
     }
